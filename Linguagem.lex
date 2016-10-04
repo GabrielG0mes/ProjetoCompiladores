@@ -16,25 +16,25 @@ private void imprimir(String descricao, String lexema) {
 
 BRANCO = [\n| |\t|\r]
 ID = [_|a-z|A-Z][a-z|A-Z|0-9|_]*
-ATRIBUICAO = “=”
+ATRIBUICAO = "="
 SOMA = "+"
-SUBTRACAO = ”-”
-MULTIPLICACAO = ”*”
-DIVISAO = ”/”
+SUBTRACAO = "-"
+MULTIPLICACAO = "*"
+DIVISAO = "/"
 NUMERO = 0|[1-9][0-9]*
 STRING = [\"][_|a-z|A-Z][a-z|A-Z|0-9|_]*[\"]
-ABRE_PARENTESE = ”(”
-FECHA_PARENTESE = ”)”
-ABRE_CHAVES = ”{”
-FECHA_CHAVES = ”}”
-PONTO_E_VIRGULA = ”;”
+ABRE_PARENTESE = "("
+FECHA_PARENTESE = ")"
+ABRE_CHAVES = "{"
+FECHA_CHAVES = "}"
+PONTO_E_VIRGULA = ";"
 
 
 "if"              { imprimir("Palavra reservada if", yytext()); }
 "for"             { imprimir("Palavra reservada for", yytext()); }
-“while”		        { imprimir("Palavra reservada while", yytext()); }
-“do”		          { imprimir(“Palavra reservada do”, yytext()); }
-“else”		        { imprimir(“Palavra reservada else”, yytext()); }
+"while"		      { imprimir("Palavra reservada while", yytext()); }
+"do"		      { imprimir("Palavra reservada do", yytext()); }
+"else"		      { imprimir("Palavra reservada else", yytext()); }
 {BRANCO}          { imprimir("Espaço em branco", yytext()); }
 {ID}              { imprimir("Identificador", yytext()); }
 {ATRIBUICAO}      { imprimir("Operador de atribuição", yytext()); }
