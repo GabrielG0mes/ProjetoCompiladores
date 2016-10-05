@@ -84,47 +84,212 @@ import java.io.Reader;
     private int endRead;
     private int state;
 
-    private char[] buffer = new char[1000];
-
-    private boolean eof;
-
-    private Reader reader;
-
-    public void GenerateLexemes() throws IOException {
-        int input;
-        int action;
-
-        int currentL;
-        int markedL;
-        
-        
-
-        while (true) {
-            markedL = marked;   //última posição aceita
-            action = -1;
-            currentL = current = start = markedL;
-            state = 0;
-            action:
-            {
-                
-            }
+    /**
+     * Indica o final da leitura do arquivo.
+     */
+    private boolean endOfFile;
+    /**
+     * Exibe 
+     * @param descricao
+     * @param lexema 
+     */
+    private void imprimir(String descricao, String lexema) {
+        System.out.println(lexema + "\t\t\t- \t" + descricao);
+    }
+    /**
+     * Construtor da classe. Recebe um java.io.Reader como parâmetro
+     * @param reader 
+     */
+    LexicalAnalyzer(Reader reader) {
+        this.reader = reader;
+    }
+    /**
+     * Método para desempacotar o mapa de caracteres.
+     * @param packed
+     * @return 
+     */
+    private static char[] UnpackCMap(String packed) {
+        char[] map = new char[0x110000];
+        int i = 0;
+        int j = 0;
+        while (i < 144) {
+            int count = packed.charAt(i++); 
+            char value = packed.charAt(i++);
+            do {
+                map[j++] = value;
+            } while (--count > 0);
         }
-    }
+        return map;
 
-    private void print(String descricao, String lexema) {
-        System.out.println(lexema + " - " + descricao);
     }
-
-    public final String text() {
-        return new String(buffer, start, marked - start);
-    }
-
-    private boolean Fill() throws IOException {
-        int numRead = reader.read(buffer, end, buffer.length - end);
+    /**
+     * Método para preencher o buffer com os caracteres do reader.
+     * @return
+     * @throws IOException 
+     */
+    private boolean Refill() throws IOException {
+        int numRead = reader.read(buffer, endRead, buffer.length - endRead);
         if (numRead > 0) {
-            end += numRead;
+            endRead += numRead;
             return false;
         }
         return true;
     }
+    /**
+     * Exibe a mensagem na tela.
+     * @return 
+     */
+    public final String text() {
+        String out = new String(buffer, startRead, marked - startRead);
+        return out;
+    }
+    /**
+     * Método gerador dos tokens.
+     * @throws IOException 
+     */
+    public void tokens() throws IOException {
+        int input;
+        int action;
+        int currentL;
+        int markedL;
+        while (true) {
+            markedL = marked;
+            action = -1;
+            currentL = current = startRead = markedL;
+            state = 0;
+            action:
+            {
+                while (true) {
+                    if (currentL < endRead) {
+                        //Busca o caracter no buffer.
+                        input = Character.codePointAt(buffer, currentL, endRead);
+                        currentL += 1;
+                    } else if (endOfFile) {
+                        input = -1;
+                        break action;
+                    } else {
+                        current = currentL;
+                        marked = markedL;
+                        boolean eof = Refill();
+                        currentL = current;
+                        markedL = marked;
+                        //Indica o final da leitura do texto.
+                        if (eof) {
+                            input = -1;
+                            break action;
+                        } else {
+                            input = Character.codePointAt(buffer, currentL, endRead);
+                            currentL += 1;
+                        }
+                    }
+                    
+                    int next = TRANSITIONS[ROWMAP[state] + CHARACTER_CMAP[input]];
+                    //Para cada espaço em branco encontrado, reinicia o action.
+                    if (next == -1) {
+                        break action;
+                    }
+                    state = next;
+                    //Quando encontra um espaço em branco, muda para o próximo estado.
+                    if ((ATTRIBUTE[state] & 1) == 1) {
+                        action = state;
+                        markedL = currentL;
+                    }
+                }
+            }
+            //Atualiza o ultimo caracter marcado para o proximo a ser lido.
+            marked = markedL;
+
+            if (input == -1 && startRead == current) {
+                endOfFile = true;
+                return;
+            } else {
+                switch (action < 0 ? action : ACTION[action]) {
+                    case 1: {
+                        throw new RuntimeException("Caractere inválido " + text());
+                    }
+                    case 17:
+                        break;
+                    case 2: {
+                        imprimir("\tEspaço em branco", text());
+                    }
+                    case 18:
+                        break;
+                    case 3: {
+                        imprimir("\tIdentificador", text());
+                    }
+                    case 19:
+                        break;
+                    case 4: {
+                        imprimir("\tNúmero", text());
+                    }
+                    case 20:
+                        break;
+                    case 5: {
+                        imprimir("\tOperador de atribuição", text());
+                    }
+                    case 21:
+                        break;
+                    case 6: {
+                        imprimir("\tOperador de soma", text());
+                    }
+                    case 22:
+                        break;
+                    case 7: {
+                        imprimir("\tOperador de subtração", text());
+                    }
+                    case 23:
+                        break;
+                    case 8: {
+                        imprimir("\tOperador de multiplicação", text());
+                    }
+                    case 24:
+                        break;
+                    case 9: {
+                        imprimir("\tOperador de divisão", text());
+                    }
+                    case 25:
+                        break;
+                    case 10: {
+                        imprimir("\tSeparador", text());
+                    }
+                    case 26:
+                        break;
+                    case 11: {
+                        imprimir("\tPalavra reservada if", text());
+                    }
+                    case 27:
+                        break;
+                    case 12: {
+                        imprimir("\tPalavra reservada do", text());
+                    }
+                    case 28:
+                        break;
+                    case 13: {
+                        imprimir("String", text());
+                    }
+                    case 29:
+                        break;
+                    case 14: {
+                        imprimir("\tPalavra reservada for", text());
+                    }
+                    case 30:
+                        break;
+                    case 15: {
+                        imprimir("\tPalavra reservada else", text());
+                    }
+                    case 31:
+                        break;
+                    case 16: {
+                        imprimir("\tPalavra reservada while", text());
+                    }
+                    case 32:
+                        break;
+                    default:
+                        System.out.println("Erro.");
+                }
+            }
+        }
+        
+    }
+
 }
